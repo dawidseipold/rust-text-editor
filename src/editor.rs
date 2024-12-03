@@ -53,4 +53,16 @@ impl Editor {
         current_line.insert(initial_cursor_horizontal_position, c);
         self.cursor_position.x += 1;
     }
+    fn new_line(&mut self) {
+        let current_line_index = self.cursor_position.y as usize;
+        let initial_cursor_horizontal_position = self.cursor_position.x as usize;
+
+        let new_line_content =
+            self.buffer[current_line_index].split_off(initial_cursor_horizontal_position);
+
+        self.buffer.insert(current_line_index + 1, new_line_content);
+
+        self.cursor_position.x = 0;
+        self.cursor_position.y += 1;
+    }
 }
