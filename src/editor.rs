@@ -84,4 +84,52 @@ impl Editor {
             self.cursor_position.x = prev_line_len;
         }
     }
+    fn move_left(&mut self) {
+        if self.cursor_position.x > 0 {
+            self.cursor_position.x -= 1;
+        }
+    }
+
+    fn move_right(&mut self) {
+        let current_line_index = self.cursor_position.y as usize;
+        let initial_cursor_horizontal_position = self.cursor_position.x as usize;
+
+        let current_line = &self.buffer[current_line_index];
+
+        if initial_cursor_horizontal_position < current_line.len() {
+            self.cursor_position.x += 1;
+        }
+    }
+
+    fn move_up(&mut self) {
+        let current_line_index = self.cursor_position.y as usize;
+        let initial_cursor_horizontal_position = self.cursor_position.x as usize;
+
+        if current_line_index > 0 {
+            let prev_line_index = current_line_index - 1;
+            let prev_line_length = self.buffer[prev_line_index].len();
+
+            if initial_cursor_horizontal_position > prev_line_length {
+                self.cursor_position.x = prev_line_length as u16;
+            }
+
+            self.cursor_position.y -= 1;
+        }
+    }
+
+    fn move_down(&mut self) {
+        let current_line_index = self.cursor_position.y as usize;
+        let initial_cursor_horizontal_position = self.cursor_position.x as usize;
+
+        if current_line_index < self.buffer.len() - 1 {
+            let next_line_index = current_line_index + 1;
+            let next_line_length = self.buffer[next_line_index].len();
+
+            if initial_cursor_horizontal_position > next_line_length {
+                self.cursor_position.x = next_line_length as u16;
+            }
+
+            self.cursor_position.y += 1;
+        }
+    }
 }
