@@ -65,4 +65,23 @@ impl Editor {
         self.cursor_position.x = 0;
         self.cursor_position.y += 1;
     }
+    fn backspace(&mut self) {
+        let current_line_index = self.cursor_position.y as usize;
+        let initial_cursor_horizontal_position = self.cursor_position.x as usize;
+
+        if initial_cursor_horizontal_position > 0 {
+            let current_line = &mut self.buffer[current_line_index];
+
+            current_line.remove(self.cursor_position.x as usize - 1);
+            self.cursor_position.x -= 1
+        } else if current_line_index > 0 {
+            let prev_line_index = current_line_index - 1;
+            let prev_line_len = self.buffer[prev_line_index].len() as u16;
+            let current_line = self.buffer.remove(current_line_index);
+
+            self.buffer[prev_line_index].push_str(&current_line);
+            self.cursor_position.y -= 1;
+            self.cursor_position.x = prev_line_len;
+        }
+    }
 }
