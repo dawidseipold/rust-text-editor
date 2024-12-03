@@ -45,4 +45,12 @@ impl Editor {
             MoveTo(self.cursor_position.x, self.cursor_position.y)
         )
     }
+    fn insert_char(&mut self, c: char) {
+        let current_line_index = self.cursor_position.y as usize;
+        let initial_cursor_horizontal_position = self.cursor_position.x as usize;
+        let current_line = &mut self.buffer[current_line_index];
+
+        current_line.insert(initial_cursor_horizontal_position, c);
+        self.cursor_position.x += 1;
+    }
 }
