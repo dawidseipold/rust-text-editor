@@ -45,6 +45,28 @@ impl Editor {
             MoveTo(self.cursor_position.x, self.cursor_position.y)
         )
     }
+
+    pub fn handle_input(&mut self, stdout: &mut io::Stdout) -> io::Result<bool> {
+        if let Event::Key(KeyEvent { code, kind, .. }) = read()? {
+            if kind == KeyEventKind::Press {
+                match code {
+                    KeyCode::Char(c) => self.insert_char(c),
+                    KeyCode::Enter => self.new_line(),
+                    KeyCode::Backspace => self.backspace(),
+                    KeyCode::Left => self.move_left(),
+                    KeyCode::Right => self.move_right(),
+                    KeyCode::Up => self.move_up(),
+                    KeyCode::Down => self.move_down(),
+                    KeyCode::Esc => return Ok(false),
+                    _ => {}
+                }
+            }
+        }
+        self.render(stdout)?;
+
+        Ok(true)
+    }
+
     fn insert_char(&mut self, c: char) {
         let current_line_index = self.cursor_position.y as usize;
         let initial_cursor_horizontal_position = self.cursor_position.x as usize;
@@ -53,6 +75,7 @@ impl Editor {
         current_line.insert(initial_cursor_horizontal_position, c);
         self.cursor_position.x += 1;
     }
+
     fn new_line(&mut self) {
         let current_line_index = self.cursor_position.y as usize;
         let initial_cursor_horizontal_position = self.cursor_position.x as usize;
@@ -65,6 +88,7 @@ impl Editor {
         self.cursor_position.x = 0;
         self.cursor_position.y += 1;
     }
+
     fn backspace(&mut self) {
         let current_line_index = self.cursor_position.y as usize;
         let initial_cursor_horizontal_position = self.cursor_position.x as usize;
@@ -84,6 +108,7 @@ impl Editor {
             self.cursor_position.x = prev_line_len;
         }
     }
+
     fn move_left(&mut self) {
         if self.cursor_position.x > 0 {
             self.cursor_position.x -= 1;
