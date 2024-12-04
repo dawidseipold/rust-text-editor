@@ -29,6 +29,7 @@ pub struct Editor {
     cursor_position: CursorPosition,
     filename: Option<String>,
     modified: bool,
+    viewport_start: usize,
 }
 
 impl Editor {
@@ -38,6 +39,7 @@ impl Editor {
             cursor_position: CursorPosition::new(),
             filename: None,
             modified: false,
+            viewport_start: 0,
         }
     }
 
@@ -61,14 +63,30 @@ impl Editor {
     pub fn render(&self, stdout: &mut io::Stdout) -> io::Result<()> {
         execute!(stdout, terminal::Clear(ClearType::All))?;
 
-        for (y, line) in self.buffer.iter().enumerate() {
+        let terminal_height = terminal::size()?.1 as usize;
+        let viewport_end = self.viewport_start + terminal_height;
+
+        let viewport_end = std::cmp::min(viewport_end, self.buffer.len());
+
+        for (y, line) in self.buffer[self.viewport_start..viewport_end]
+            .iter()
+            .enumerate()
+        {
             execute!(stdout, MoveTo(0, y as u16), Print(line))?;
         }
 
         execute!(
             stdout,
-            MoveTo(self.cursor_position.x, self.cursor_position.y)
-        )
+            MoveTo(
+                self.cursor_position.x,
+                (self.cursor_position.y as usize - self.viewport_start) as u16
+            )
+        )?;
+
+        self.render_scrollbar(stdout, terminal_height)?;
+
+        Ok(())
+    }
     }
 
     pub fn handle_input(&mut self, stdout: &mut io::Stdout) -> io::Result<bool> {
@@ -156,6 +174,14 @@ impl Editor {
 
         self.cursor_position.x = 0;
         self.cursor_position.y += 1;
+
+        if let Ok((_, terminal_height)) = terminal::size() {
+            let terminal_height = terminal_height as usize;
+
+            if self.cursor_position.y >= ((self.viewport_start + terminal_height) as u16) {
+                self.viewport_start = (self.cursor_position.y as usize) - terminal_height + 1
+            }
+        }
     }
 
     fn backspace(&mut self) {
@@ -175,6 +201,10 @@ impl Editor {
             self.buffer[prev_line_index].push_str(&current_line);
             self.cursor_position.y -= 1;
             self.cursor_position.x = prev_line_len;
+
+            if (self.cursor_position.y as usize) < self.viewport_start {
+                self.viewport_start = self.cursor_position.y as usize;
+            }
         }
     }
 
@@ -208,6 +238,10 @@ impl Editor {
             }
 
             self.cursor_position.y -= 1;
+
+            if self.cursor_position.y < self.viewport_start as u16 {
+                self.viewport_start = self.cursor_position.y as usize;
+            }
         }
     }
 
@@ -224,6 +258,14 @@ impl Editor {
             }
 
             self.cursor_position.y += 1;
+
+            if let Ok((_, terminal_height)) = terminal::size() {
+                let terminal_height = terminal_height as usize;
+
+                if self.cursor_position.y >= ((self.viewport_start + terminal_height) as u16) {
+                    self.viewport_start = (self.cursor_position.y as usize) - terminal_height + 1
+                }
+            }
         }
     }
 
