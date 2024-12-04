@@ -27,6 +27,8 @@ impl CursorPosition {
 pub struct Editor {
     buffer: Vec<String>,
     cursor_position: CursorPosition,
+    filename: Option<String>,
+    modified: bool,
 }
 
 impl Editor {
@@ -34,6 +36,8 @@ impl Editor {
         Self {
             buffer: vec![String::new()],
             cursor_position: CursorPosition::new(),
+            filename: None,
+            modified: false,
         }
     }
 
