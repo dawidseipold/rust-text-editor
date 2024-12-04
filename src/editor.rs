@@ -72,17 +72,61 @@ impl Editor {
     }
 
     pub fn handle_input(&mut self, stdout: &mut io::Stdout) -> io::Result<bool> {
-        if let Event::Key(KeyEvent { code, kind, .. }) = read()? {
+        if let Event::Key(KeyEvent {
+            code,
+            kind,
+            modifiers,
+            ..
+        }) = read()?
+        {
             if kind == KeyEventKind::Press {
                 match code {
-                    KeyCode::Char(c) => self.insert_char(c),
-                    KeyCode::Enter => self.new_line(),
-                    KeyCode::Backspace => self.backspace(),
+                    KeyCode::Char(c)
+                        if modifiers.contains(KeyModifiers::CONTROL)
+                            && modifiers.contains(KeyModifiers::SHIFT) =>
+                    {
+                        match c {
+                            's' => self.prompt_and_save_as(stdout)?,
+                            _ => {}
+                        }
+                    }
+                    KeyCode::Char(c) if modifiers.contains(KeyModifiers::CONTROL) => {
+                        match c {
+                            's' => {
+                                if let Some(ref filename) = self.filename {
+                                    self.save_to_file(filename)?;
+                                } else {
+                                    self.prompt_and_save_as(stdout)?;
+                                }
+                            }
+                            _ => {}
+                        }
+
+                        self.modified = false;
+                    }
+                    KeyCode::Char(c) => {
+                        self.insert_char(c);
+                        self.modified = true
+                    }
+                    KeyCode::Enter => {
+                        self.new_line();
+                        self.modified = true;
+                    }
+                    KeyCode::Backspace => {
+                        self.backspace();
+                        self.modified = true;
+                    }
                     KeyCode::Left => self.move_left(),
                     KeyCode::Right => self.move_right(),
                     KeyCode::Up => self.move_up(),
                     KeyCode::Down => self.move_down(),
-                    KeyCode::Esc => return Ok(false),
+                    KeyCode::Esc => {
+                        if self.modified {
+                            return self.prompt_if_save(stdout);
+                        } else {
+                            return Ok(false);
+                        }
+                    }
                     _ => {}
                 }
             }
