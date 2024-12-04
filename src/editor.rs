@@ -197,4 +197,75 @@ impl Editor {
         Ok(())
     }
 
+    // TODO: Make this a menu with those options
+    fn prompt_if_save(&mut self, stdout: &mut io::Stdout) -> io::Result<bool> {
+        disable_raw_mode()?;
+        execute!(
+            stdout,
+            MoveTo(0, self.buffer.len() as u16 + 1),
+            terminal::Clear(ClearType::CurrentLine),
+            Print("Would you like to save a fule? (y/n/c): ")
+        )?;
+        stdout.flush()?;
+
+        let mut response = String::new();
+        io::stdin().read_line(&mut response)?;
+
+        let response = response.trim();
+
+        enable_raw_mode()?;
+
+        match response {
+            "y" => {
+                if let Some(ref filename) = self.filename {
+                    self.save_to_file(filename)?;
+                } else {
+                    self.prompt_and_save_as(stdout)?;
+                }
+                Ok(false)
+            }
+            "n" => Ok(false),
+            "c" => Ok(true),
+            _ => {
+                execute!(
+                    stdout,
+                    MoveTo(0, self.buffer.len() as u16 + 1),
+                    Print("Invalid reponse!")
+                )?;
+
+                stdout.flush()?;
+
+                Ok(true)
+            }
+        }
+    }
+
+    fn prompt_and_save_as(&mut self, stdout: &mut io::Stdout) -> io::Result<()> {
+        disable_raw_mode()?;
+        execute!(
+            stdout,
+            MoveTo(0, self.buffer.len() as u16 + 1),
+            terminal::Clear(ClearType::CurrentLine),
+            Print("Enter filename: ")
+        )?;
+        stdout.flush()?;
+
+        let mut filename = String::new();
+        io::stdin().read_line(&mut filename)?;
+
+        let filename = filename.trim().to_string();
+
+        self.save_to_file(&filename)?;
+        self.filename = Some(filename);
+
+        execute!(
+            stdout,
+            MoveTo(0, self.buffer.len() as u16 + 1),
+            Print("File saved!")
+        )?;
+        stdout.flush()?;
+        enable_raw_mode()?;
+
+        Ok(())
+    }
 }
