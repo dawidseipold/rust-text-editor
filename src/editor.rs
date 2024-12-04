@@ -87,6 +87,39 @@ impl Editor {
 
         Ok(())
     }
+
+    fn render_scrollbar(&self, stdout: &mut io::Stdout, terminal_height: usize) -> io::Result<()> {
+        let terminal_width = terminal::size()?.0 as usize;
+        let buffer_length = self.buffer.len();
+
+        if buffer_length <= terminal_height {
+            return Ok(());
+        }
+
+        let scrollbar_height =
+            terminal_height as f32 * (terminal_height as f32 / buffer_length as f32);
+        let scrollbar_start =
+            (self.viewport_start as f32 / buffer_length as f32) * terminal_height as f32;
+
+        for y in 0..terminal_height {
+            let y = y as f32;
+
+            if y >= scrollbar_start && y < scrollbar_start + scrollbar_height {
+                execute!(
+                    stdout,
+                    MoveTo((terminal_width - 1) as u16, y as u16),
+                    Print("█")
+                )?;
+            } else {
+                execute!(
+                    stdout,
+                    MoveTo((terminal_width - 1) as u16, y as u16),
+                    Print("░")
+                )?;
+            }
+        }
+
+        Ok(())
     }
 
     pub fn handle_input(&mut self, stdout: &mut io::Stdout) -> io::Result<bool> {
