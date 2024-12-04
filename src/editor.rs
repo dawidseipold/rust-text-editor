@@ -41,6 +41,23 @@ impl Editor {
         }
     }
 
+    pub fn load_from_file(&mut self, filename: &str) -> io::Result<()> {
+        let path = Path::new(filename);
+
+        if path.exists() {
+            let mut file = File::open(filename)?;
+            let mut contents = String::new();
+
+            file.read_to_string(&mut contents)?;
+
+            self.buffer = contents.lines().map(String::from).collect();
+            self.filename = Some(filename.to_string());
+            self.modified = false;
+        }
+
+        Ok(())
+    }
+
     pub fn render(&self, stdout: &mut io::Stdout) -> io::Result<()> {
         execute!(stdout, terminal::Clear(ClearType::All))?;
 
