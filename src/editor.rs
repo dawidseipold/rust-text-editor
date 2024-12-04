@@ -182,4 +182,19 @@ impl Editor {
             self.cursor_position.y += 1;
         }
     }
+
+    fn save_to_file(&self, filename: &str) -> io::Result<()> {
+        let mut file = File::create(filename)?;
+
+        for (i, line) in self.buffer.iter().enumerate() {
+            if i < self.buffer.len() - 1 {
+                writeln!(file, "{}", line)?;
+            } else {
+                write!(file, "{}", line)?
+            }
+        }
+
+        Ok(())
+    }
+
 }
