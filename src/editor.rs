@@ -1,11 +1,15 @@
-use std::io::{self};
+use std::{
+    fs::File,
+    io::{self, Read, Write},
+    path::Path,
+};
 
 use crossterm::{
     cursor::MoveTo,
-    event::{read, Event, KeyCode, KeyEvent, KeyEventKind},
+    event::{read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
     execute,
     style::Print,
-    terminal::{self, ClearType},
+    terminal::{self, disable_raw_mode, enable_raw_mode, ClearType},
 };
 
 #[derive(Clone, Copy)]
